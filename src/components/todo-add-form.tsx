@@ -17,8 +17,8 @@ const handleAddTodo = async (formData: FormData) => {
     throw new Error("No user");
   }
 
-  const sql = neon(process.env.DATABASE_URL!);
-  await sql`INSERT INTO todos (task, is_complete, owner_id) VALUES (${newTodo.toString()}, false, ${user.id})`;
+  const sql = neon(process.env.DATABASE_URL_DEVURL!);
+  await sql`INSERT INTO todos (task, is_complete) VALUES (${newTodo.toString()}, false, ${user.id})`;
 
   revalidatePath("/");
 };

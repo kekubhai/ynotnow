@@ -1,17 +1,16 @@
-import { useUser } from '@auth0/nextjs-auth0/client';
+import { useUser } from "@stackframe/stack";
 
 export const useAuth = () => {
-  const { user, error, isLoading } = useUser();
+  const user =useUser();
 
   return {
     user,
-    error,
-    isLoading,
+    
     isAuthenticated: !!user,
   };
 };
 
-export const getAuth0User = async (req: any) => {
-  const { user } = await getSession(req, res);
+export const getAuthUser = async (req: any) => {
+  const user = await req.getUser();
   return user;
 }; 

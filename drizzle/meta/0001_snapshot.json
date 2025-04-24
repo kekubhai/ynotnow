@@ -520,7 +520,7 @@
           "notNull": true,
           "identity": {
             "type": "byDefault",
-            "name": "todos_id_seq",
+            "name": "todos_id_seq2",
             "schema": "public",
             "increment": "1",
             "startWith": "1",

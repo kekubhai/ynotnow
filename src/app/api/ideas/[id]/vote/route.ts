@@ -1,83 +1,74 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { prisma } from "@/lib/prisma";
-import { authOptions } from "../../../auth/[...nextauth]/route";
 
-export async function POST(
+import { db } from "@/lib/db";
+import { ideas, upvotes } from "@/lib/db/schema";
+import { and, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { useUser } from "@stackframe/stack";
+
+export default function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    const { value } = await request.json();
-    const ideaId = params.id;
+    const user=useUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    // Check if user has already voted
-    const existingVote = await prisma.vote.findUnique({
-      where: {
-        userId_ideaId: {
-          userId: session.user.id,
-          ideaId,
-        },
-      },
+    const ideaId = params.id;
+    const userId = user.id;
+    
+    // Check if the user already voted for this idea
+    const existingVote =   db.query.upvotes.findFirst({
+      where: and(
+        eq(upvotes.userId, userId),
+        eq(upvotes.ideaId, ideaId)
+      ),
     });
 
     if (existingVote) {
-      // Update existing vote
-      await prisma.vote.update({
-        where: {
-          userId_ideaId: {
-            userId: session.user.id,
-            ideaId,
-          },
-        },
-        data: {
-          value,
-        },
-      });
-    } else {
-      // Create new vote
-      await prisma.vote.create({
-        data: {
-          userId: session.user.id,
-          ideaId,
-          value,
-        },
-      });
+      return NextResponse.json(
+        { error: "You have already voted for this idea" },
+        { status: 400 }
+      );
     }
+    
+    // Begin a transaction to ensure data consistency
+     db.transaction(async (tx) => {
+      // Add entry to upvotes table
+      await tx.insert(upvotes).values({
+        userId,
+        ideaId,
+      });
+      
+      // Get current idea
+      const idea =  tx.query.ideas.findFirst({
+        where: eq(ideas.id, ideaId),
+      });
 
-    // Get updated vote count
-    const votes = await prisma.vote.aggregate({
-      where: { ideaId },
-      _sum: { value: true },
+      if (!idea) {
+        throw new Error("Idea not found");
+      }
+      
+      // Increment upvotes count
+      await tx.update(ideas)
+        .set({ 
+          upvotes: (idea.upvotes || 0) + 1 
+        })
+        .where(eq(ideas.id, ideaId));
     });
 
-    // Get user's current vote
-    const userVote = await prisma.vote.findUnique({
-      where: {
-        userId_ideaId: {
-          userId: session.user.id,
-          ideaId,
-        },
-      },
-      select: {
-        value: true,
-      },
-    });
+    // Revalidate the ideas pages
+    revalidatePath('/ideas');
+    revalidatePath(`/ideas/${ideaId}`);
 
-    return NextResponse.json({
-      votes: votes._sum.value || 0,
-      userVote: userVote?.value || null,
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error voting:", error);
+    console.error("Error upvoting idea:", error);
     return NextResponse.json(
-      { error: "Failed to process vote" },
+      { error: "Failed to upvote idea" },
       { status: 500 }
     );
   }
-} 
+}

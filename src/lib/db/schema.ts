@@ -79,6 +79,5 @@ export const notifications = pgTable('notifications', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-
 // Export all tables
-export * from './schema'; 
+export * from './schema';
