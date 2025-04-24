@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { MagicCard } from "@/components/magicui/magic-card"
 import { useTheme } from "next-themes";
+import { UserButton } from "@stackframe/stack"
 export default function Home() {
   const { theme } = useTheme();
   return (
@@ -53,9 +54,10 @@ export default function Home() {
               >
                 Testimonials
               </Link>
-              <Link href="#pricing" className="text-sm font-medium text-gray-300 hover:text-blue-400 transition-colors">
-                Pricing
+              <Link href="/ideas" className="text-sm font-medium text-gray-300 hover:text-blue-400 transition-colors">
+                Ideas
               </Link>
+              <UserButton/>
             </nav>
             <div className="flex items-center gap-4">
               <Button variant="ghost" className="hidden md:flex text-gray-300 hover:text-white hover:bg-white/10">
