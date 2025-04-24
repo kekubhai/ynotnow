@@ -16,14 +16,7 @@ export default function Home() {
           <div
             key={i}
             className="absolute rounded-full bg-white"
-            style={{
-              width: Math.random() * 2 + 1 + "px",
-              height: Math.random() * 2 + 1 + "px",
-              top: Math.random() * 100 + "%",
-              left: Math.random() * 100 + "%",
-              opacity: Math.random() * 0.5 + 0.3,
-              animation: `twinkle ${Math.random() * 5 + 5}s infinite`,
-            }}
+           
           />
         ))}
       </div>

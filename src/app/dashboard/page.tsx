@@ -1,24 +1,48 @@
-'use client'
-import React from 'react';
-import { UserButton, useUser } from "@stackframe/stack";
+'use client';
+import dotenv from 'dotenv';
+import type { Todo } from '@/app/schema';
+import { neon } from '@neondatabase/serverless';
+import { useUser } from '@stackframe/stack';
+import { useEffect, useState } from 'react';
 
-export default function Dashboard() {
+const getDb = (token: string) =>
+  neon(process.env.DATABASE_AUTHENTICATED_URL!, {
+    authToken: token,
+  });
+
+export  default function TodoList() {
   const user = useUser();
-  const loggedIn = user !== null;
+  const [todos, setTodos] = useState<Array<Todo>>([]);
+
+  useEffect(() => {
+    async function loadTodos() {
+      try {
+        const authToken = (await user?.getAuthJson())?.accessToken;
+
+        if (!authToken) {
+          return;
+        }
+
+        const sql = getDb(authToken);
+
+        const todosResponse = await sql<Array<Todo>>`
+          SELECT * FROM todos WHERE user_id = auth.uid()
+        `;
+
+        setTodos(todosResponse);
+      } catch (error) {
+        console.error('Error loading todos:', error);
+      }
+    }
+
+    loadTodos();
+  }, [user]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-slate-900 to-gray-800 text-white px-4">
-      <h1 className="text-4xl font-extrabold mb-4">Dashboard</h1>
-
-      {loggedIn ? (
-        <p className="text-lg mb-6">Welcome back, <span className="font-semibold">{user?.displayName}</span>!</p>
-      ) : (
-        <p className="text-lg mb-6">Please log in to access your dashboard.</p>
-      )}
-
-      <div className="mt-2">
-        <UserButton />
-      </div>
-    </div>
+    <ul>
+      {todos?.map((todo) => (
+        <li key={todo.id}>{todo.task}</li>
+      ))}
+    </ul>
   );
 }
