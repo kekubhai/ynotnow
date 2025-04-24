@@ -1,16 +1,19 @@
 'use client';
-import dotenv from 'dotenv';
+
 import type { Todo } from '@/app/schema';
 import { neon } from '@neondatabase/serverless';
 import { useUser } from '@stackframe/stack';
 import { useEffect, useState } from 'react';
 
+// ✅ Use a proper connection string directly (NOT overwriting the neon function)
+const DATABASE_URL = 'postgresql://authenticated:npg_5Xsf7MaNIbLB@ep-dry-sky-a4ne1obe-pooler.us-east-1.aws.neon.tech/ynotnow?sslmode=require';
+
 const getDb = (token: string) =>
-  neon(process.env.DATABASE_AUTHENTICATED_URL!, {
+  neon(DATABASE_URL, {
     authToken: token,
   });
 
-export  default function TodoList() {
+export default function TodoList() {
   const user = useUser();
   const [todos, setTodos] = useState<Array<Todo>>([]);
 
@@ -18,14 +21,11 @@ export  default function TodoList() {
     async function loadTodos() {
       try {
         const authToken = (await user?.getAuthJson())?.accessToken;
-
-        if (!authToken) {
-          return;
-        }
+        if (!authToken) return;
 
         const sql = getDb(authToken);
 
-        const todosResponse = await sql<Array<Todo>>`
+        const todosResponse = await sql`
           SELECT * FROM todos WHERE user_id = auth.uid()
         `;
 
@@ -40,9 +40,11 @@ export  default function TodoList() {
 
   return (
     <ul>
-      {todos?.map((todo) => (
-        <li key={todo.id}>{todo.task}</li>
-      ))}
+      {todos?.length > 0 ? (
+        todos.map((todo) => <li key={todo.id}>{todo.task}</li>)
+      ) : (
+        <h3>hello</h3>
+      )}
     </ul>
   );
 }
