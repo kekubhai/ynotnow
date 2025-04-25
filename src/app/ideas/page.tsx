@@ -12,7 +12,7 @@ export default function IdeasPage() {
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Startup Ideas</h1>
-        <Link href="/ideas/new">
+        <Link href="/ideas/ADD_idea">
           <Button className="bg-blue-500 hover:bg-blue-600">
             Share Your Idea
           </Button>
