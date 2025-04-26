@@ -1,4 +1,5 @@
-import { users } from './users';
-import { ideas } from './ideas';
-
-export { users, ideas }; 
+// Export all schema entities
+export * from './users';
+export * from './ideas';
+export * from './comments';
+export * from './upvotes';
